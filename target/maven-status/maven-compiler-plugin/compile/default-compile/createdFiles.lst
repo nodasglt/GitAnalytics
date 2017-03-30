@@ -1,2 +1,4 @@
 com/GitAnalytics/AuthorInfo.class
 com/GitAnalytics/CommitInfo.class
+com/GitAnalytics/App.class
+com/GitAnalytics/BranchInfo.class

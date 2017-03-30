@@ -15,6 +15,7 @@ import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 
@@ -28,38 +29,55 @@ public class CommitInfo
     private final List<String> mTags;
     private final PersonIdent mAuthor;
     private final int[] mLinesChanged; //Del, Ch, Add
+    
+    private static int I = 0;
+    private static RevWalk rw = null;
 
-    public CommitInfo(Repository repo, RevCommit commit, List<String> tags)
+    public CommitInfo(Repository repo, RevCommit commit, List<String> tags) throws Exception
     {
+        System.out.print(I + "\r"); I++;
         mCommit = commit;
         mTags = tags;
         mAuthor = mCommit.getAuthorIdent();
         mLinesChanged = new int[3];
         
-        RevWalk rw = new RevWalk(repo);
+        if (rw == null) rw = new RevWalk(repo);
+        RevTree parent = null;
         try
         {
-            RevCommit parent = rw.parseCommit(commit.getParent(0).getId());
-            DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE);
-            df.setRepository(repo);
-            df.setDiffComparator(RawTextComparator.DEFAULT);
-            df.setDetectRenames(true);
-            //int filesChanged = diffs.size();
-            for (DiffEntry diff : df.scan(parent.getTree(), commit.getTree()))
-            {
-                for (Edit edit : df.toFileHeader(diff).toEditList())
-                {
-                    mLinesChanged[0] = edit.getEndA() - edit.getBeginA();
-                    mLinesChanged[2] = edit.getEndB() - edit.getBeginB();
-
-                    if (edit.getType() == Type.REPLACE)
-                    {
-                        mLinesChanged[1] = mLinesChanged[2] - mLinesChanged[0];
-                    }
-                }
-            }
+            parent = rw.parseCommit(commit.getParent(0).getId()).getTree();
         }
         catch (Exception e) {}
+        DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE);
+        df.setRepository(repo);
+        df.setDiffComparator(RawTextComparator.DEFAULT);
+        df.setDetectRenames(true);
+        //int filesChanged = diffs.size();
+        mLinesChanged[0] = mLinesChanged[1] = mLinesChanged[2] = 0;
+        for (DiffEntry diff : df.scan(parent, commit.getTree()))
+        {
+            for (Edit edit : df.toFileHeader(diff).toEditList())
+            {
+                int del = edit.getEndA() - edit.getBeginA();
+                int add = edit.getEndB() - edit.getBeginB();
+
+                if (edit.getType() == Type.REPLACE)
+                {
+                    mLinesChanged[1] += Math.abs(add - del);
+                }
+                
+                mLinesChanged[2] += add;
+                mLinesChanged[0] += del;
+            }
+        }
+    }
+    
+    public CommitInfo(RevCommit commit)
+    {
+        mCommit = commit;
+        mTags = null;
+        mAuthor = null;
+        mLinesChanged = null;
     }
     
     public int getDeletedLinesNum()

@@ -15,15 +15,18 @@ public class App
     {
         PrintWriter writer = new PrintWriter(args[1], "UTF-8");
     
+        System.out.println(args[0]);
         Repository repo = new FileRepository(args[0] + "/.git");
         Git git = new Git(repo);
         
         List<BranchInfo> branches = BranchInfo.getBranches(repo, git);
+        System.out.println("Branches done!");
         Map<String, AuthorInfo> authors = AuthorInfo.getAllAuthors(repo, git);
         
        //2
        branches.forEach((branch) ->
        {
+           int commitCount = 0;
            int lineCount = 0;
            try
            {
@@ -31,6 +34,8 @@ public class App
                 {
                     CommitInfo commitInfo = new CommitInfo(repo, commit, null);
                     lineCount += commitInfo.getAddedLinesNum() - commitInfo.getDeletedLinesNum();
+                    commitCount++;
+                    System.out.print(commitCount + "\r");
                 }
            }
            catch (Exception e) {}

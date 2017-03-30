@@ -47,7 +47,7 @@ public class AuthorInfo
         return this;
     }
     
-    public AuthorInfo addCommit(Repository repo, RevCommit commit)
+    public AuthorInfo addCommit(Repository repo, RevCommit commit) throws Exception
     {
         mCommits.add(new CommitInfo(repo, commit, new LinkedList<>()));
         
