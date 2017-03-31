@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
 
 /**
  *
@@ -21,35 +19,31 @@ import org.eclipse.jgit.revwalk.RevCommit;
 public class AuthorInfo
 {
     private final LinkedList<CommitInfo> mCommits;
-    private Map<Ref, Integer> mCommitsPerBranch;
+    private final Map<Ref, Integer> mCommitsPerBranch;
 
-    private AuthorInfo(List<Ref> branches)
+    private AuthorInfo()
     {
         mCommits = new LinkedList<>();
         mCommitsPerBranch = new HashMap<>();
-
-        branches.forEach((branch) -> {
-            mCommitsPerBranch.put(branch, 0);
-        });
     }
 
-    public AuthorInfo incrementCommitCounterOnBranch(Ref branch)
+    public AuthorInfo incrementCommitCounterOnBranch(BranchInfo branch)
     {
         int count = 1;
 
-        if (mCommitsPerBranch.containsKey(branch))
+        if (mCommitsPerBranch.containsKey(branch.getBranchRef()))
         {
-            count = mCommitsPerBranch.get(branch) + 1;               
+            count = mCommitsPerBranch.get(branch.getBranchRef()) + 1;               
         }
 
-        mCommitsPerBranch.put(branch, count);
+        mCommitsPerBranch.put(branch.getBranchRef(), count);
         
         return this;
     }
     
-    public AuthorInfo addCommit(Repository repo, RevCommit commit) throws Exception
+    public AuthorInfo addCommit(CommitInfo commit) throws Exception
     {
-        mCommits.add(new CommitInfo(repo, commit, new LinkedList<>()));
+        mCommits.add(commit);
         
         return this;
     }
@@ -64,41 +58,41 @@ public class AuthorInfo
         return mCommits;
     }
 
-    public int getTotalCommitsOnBranch(Ref branch)
+    public int getTotalCommitsOnBranch(BranchInfo branch)
     {
-        if (mCommitsPerBranch.containsKey(branch))
+        if (mCommitsPerBranch.containsKey(branch.getBranchRef()))
         {
-            return mCommitsPerBranch.get(branch);               
+            return mCommitsPerBranch.get(branch.getBranchRef());               
         }
 
         return 0;
     }
     
-    public static Map<String, AuthorInfo> getAllAuthors(Repository repo, Git git) throws Exception
+    public static Map<String, AuthorInfo> getAllAuthors(Git git, List<BranchInfo> branches, List<CommitInfo> commits) throws Exception
     {
         Map<String, AuthorInfo> authors = new HashMap<>();
-        List<Ref> branches = git.branchList().call();
         
-        for (RevCommit commit : git.log().all().call())
+        
+        for (CommitInfo commit : commits)
         {
-            String name = commit.getAuthorIdent().getName();
+            String name = commit.getAuthorName();
             if (authors.containsKey(name))
             {
-                authors.get(name).addCommit(repo, commit);
+                authors.get(name).addCommit(commit);
             }
             else
             {
-                authors.put(name, new AuthorInfo(branches).addCommit(repo, commit));
+                authors.put(name, new AuthorInfo().addCommit(commit));
             }
         }
         
-        for (Ref branch : branches)
+        branches.forEach((BranchInfo branch) ->
         {
-            for (RevCommit commit : git.log().add(branch.getObjectId()).call())
+            branch.getCommits().forEach((CommitInfo commit) ->
             {
-                authors.get(commit.getAuthorIdent().getName()).incrementCommitCounterOnBranch(branch);
-            }
-        }
+                authors.get(commit.getAuthorName()).incrementCommitCounterOnBranch(branch);
+            });
+        });
         
         return authors;
     }
