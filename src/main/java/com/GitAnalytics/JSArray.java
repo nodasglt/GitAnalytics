@@ -7,7 +7,6 @@ package com.GitAnalytics;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -15,7 +14,7 @@ import java.util.Map;
  */
 public class JSArray
 {
-    private List<Object> mItems;
+    private final List<Object> mItems;
     
     public JSArray()
     {
@@ -29,14 +28,12 @@ public class JSArray
         return this;
     }
     
+    @Override
     public String toString()
     {
         String s = "[";
         
-        for (Object e : mItems)
-        {
-            s += e.toString() + ",";
-        }
+        s = mItems.stream().map((e) -> e.toString() + ",").reduce(s, String::concat);
         
         return s + "]";
     }

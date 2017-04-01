@@ -36,10 +36,7 @@ public class App
             int lineCount = 0;
             try
             {
-                for (CommitInfo commit : allCommits)
-                {
-                    lineCount += commit.getAddedLinesNum() - commit.getDeletedLinesNum();
-                }
+                lineCount = allCommits.stream().map((commit) -> commit.getAddedLinesNum() - commit.getDeletedLinesNum()).reduce(lineCount, Integer::sum);
             }
             catch (Exception e) {}
             

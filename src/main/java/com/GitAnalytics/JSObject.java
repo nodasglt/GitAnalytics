@@ -15,7 +15,7 @@ import java.util.Map.Entry;
  */
 public class JSObject
 {
-    private Map<String, Object> mItems;
+    private final Map<String, Object> mItems;
     
     public JSObject()
     {
