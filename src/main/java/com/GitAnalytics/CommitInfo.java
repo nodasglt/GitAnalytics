@@ -37,7 +37,7 @@ public class CommitInfo
 
     private CommitInfo(DiffFormatter df, RevWalk rw, RevCommit commit, List<String> tags) throws Exception
     {
-        System.out.print(I + "\r"); I++;
+        System.out.print("Processing Commit: " + I + "\r"); I++;
         mCommit = commit;
         mTags = tags;
         mAuthor = mCommit.getAuthorIdent();
