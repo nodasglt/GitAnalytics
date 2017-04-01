@@ -131,8 +131,6 @@ public class CommitInfo
         
         RevWalk rw = new RevWalk(repo);
         
-        int i = 0;
-        
         for (RevCommit commit : commits)
         {
             List<String> curTags = new LinkedList<>();
@@ -143,8 +141,6 @@ public class CommitInfo
             });
                         
             list.add(new CommitInfo(df, rw, commit, curTags));
-            
-            if (++i > 1000) break;
         }
         
         return list;
